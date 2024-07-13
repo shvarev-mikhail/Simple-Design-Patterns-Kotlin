@@ -2,17 +2,17 @@
 
  * [Creating Patterns](#creating)
 	* [Abstract Factory](#abstract-factory)
-  * [Builder / Assembler](#builder--assembler)
+  	* [Builder / Assembler](#builder--assembler)
 	* [Factory Method](#factory-method)
-  * [Prototype](#prototype)
+  	* [Prototype](#prototype)
 	* [Singleton](#singleton)
 
  * [Structural Patterns](#structural)
 	* [Adapter](#adapter)
  	* [Bridge](#bridge)
 	* [Composite](#composite)
-  * [Decorator / Wrapper](#decorator--wrapper)
+  	* [Decorator / Wrapper](#decorator--wrapper)
 	* [Facade](#facade)
-  * [FlyWeight](#flyweight)
+  	* [FlyWeight](#flyweight)
 	* [Proxy](#proxy)
 	
