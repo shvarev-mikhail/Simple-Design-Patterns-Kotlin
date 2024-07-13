@@ -276,3 +276,359 @@ object SingletonObject {
 ```Kotlin
 println("${SingletonObject.getInstance()} == ${SingletonObject.getInstance()}")
 ```
+
+[Adapter](/src/patterns/structural/Adapter.kt)
+--------
+#### Example
+```Kotlin
+interface Enemy {
+    fun attack()
+}
+
+class Tank : Enemy {
+    override fun attack() {
+        println("Tank Attack")
+    }
+}
+
+class SpecialTank {
+    fun megaAttack() {
+        println("Special Tank Mega Attack")
+    }
+}
+
+class EnemyAdapter(private val specialTank: SpecialTank = SpecialTank()) : Enemy {
+    override fun attack() {
+        specialTank.megaAttack()
+    }
+}
+```
+
+#### Usage
+```Kotlin
+    val tank = Tank()
+    val specialTank = SpecialTank()
+    val adapterForSpecialTank = EnemyAdapter(specialTank)
+    val units = listOf(tank, adapterForSpecialTank)
+    units.forEach { it.attack() }
+```
+
+[Bridge](/src/patterns/structural/Bridge.kt)
+--------
+#### Example
+```Kotlin
+open class Controller(private val rc: Rc) {
+
+    fun start() = rc.engineStart()
+
+    fun stop() = rc.engineStop()
+
+    fun setPower(power: Int) = rc.setPower(power)
+
+}
+
+class ModifiedController(private val rc: Rc) : Controller(rc) {
+    fun turbo() {
+        rc.setPower(100)
+    }
+}
+
+interface Rc {
+    fun engineStart()
+    fun engineStop()
+    fun setPower(power: Int)
+}
+
+class Helicopter : Rc {
+    override fun engineStart() {
+        println("Helicopter engine start")
+    }
+
+    override fun engineStop() {
+        println("Helicopter engine stop")
+    }
+
+    override fun setPower(power: Int) {
+        println("Helicopter set power $power")
+    }
+}
+
+class Buggy : Rc {
+    override fun engineStart() {
+        println("Buggy engine start")
+    }
+
+    override fun engineStop() {
+        println("Buggy engine stop")
+    }
+
+    override fun setPower(power: Int) {
+        println("Buggy set power $power")
+    }
+}
+```
+
+#### Usage
+```Kotlin
+    val helicopter = Helicopter()
+    val controller = Controller(rc = helicopter)
+    controller.start()
+    controller.setPower(90)
+
+    val bugger = Buggy()
+    val modifiedController = ModifiedController(rc = bugger)
+    modifiedController.start()
+    modifiedController.turbo()
+```
+
+[Composite](/src/patterns/structural/Composite.kt)
+--------
+#### Example
+```Kotlin
+interface Component {
+    fun operation()
+}
+
+interface ComponentComposite : Component {
+    override fun operation()
+    fun add(component: Component)
+    fun remove(component: Component)
+}
+
+class Leaf : Component {
+    override fun operation() {
+        println("do some work from leaf")
+    }
+}
+
+class Composite : ComponentComposite {
+    private val components = arrayListOf<Component>()
+    override fun operation() {
+        println("do some work from composite")
+        components.forEach {
+            it.operation()
+        }
+    }
+
+    override fun add(component: Component) {
+        components.add(component)
+    }
+
+    override fun remove(component: Component) {
+        components.remove(component)
+    }
+}
+```
+
+#### Usage
+```Kotlin
+    val root = Composite()
+    root.add(Leaf())
+
+    val composite1 = Composite()
+    composite1.add(Composite())
+    composite1.add(Leaf())
+
+    root.add(composite1)
+
+    root.operation()
+```
+
+[Decorator / Wrapper](/src/patterns/structural/Decorator.kt)
+--------
+#### Example
+```Kotlin
+interface Armor {
+    var armorHealth: Int
+    fun getArmor(): Int
+}
+
+class ChainmailArmor(override var armorHealth: Int) : Armor {
+    override fun getArmor(): Int {
+        println("$armorHealth: chainmail")
+        return armorHealth
+    }
+}
+
+open class ArmorWrapper(var armor: Armor, override var armorHealth: Int) : Armor {
+    override fun getArmor(): Int = armor.getArmor()
+}
+
+class HeadArmor(armor: Armor, armorHealth: Int) : ArmorWrapper(
+    armor = armor,
+    armorHealth = armorHealth
+) {
+    override fun getArmor(): Int {
+        println("$armorHealth: head")
+        return super.getArmor() + armorHealth
+    }
+}
+
+class GlovesArmor(armor: Armor, armorHealth: Int) : ArmorWrapper(
+    armor = armor,
+    armorHealth = armorHealth
+) {
+    override fun getArmor(): Int {
+        println("$armorHealth: gloves")
+        return super.getArmor() + armorHealth
+    }
+}
+
+class ChestArmor(armor: Armor, armorHealth: Int) : ArmorWrapper(
+    armor = armor,
+    armorHealth = armorHealth
+) {
+    override fun getArmor(): Int {
+        println("$armorHealth: chest")
+        return super.getArmor() + armorHealth
+    }
+}
+```
+
+#### Usage
+```Kotlin
+    var armor: Armor = ChainmailArmor(50)
+    armor = HeadArmor(armor = armor, 30)
+    armor = GlovesArmor(armor = armor, 5)
+    armor = ChestArmor(armor = armor, 75)
+    println("${armor.getArmor()}: full")
+```
+
+[Facade](/src/patterns/structural/Facade.kt)
+--------
+#### Example
+```Kotlin
+class Computer {
+    fun getElectric() {
+        println("electricity supply")
+    }
+
+    fun startFans() {
+        println("starting fans")
+    }
+
+    fun startBios() {
+        println("starting bios")
+    }
+
+    fun loadOs() {
+        println("loading os")
+    }
+}
+
+class ComputerFacade(private val computer: Computer) {
+    fun startPc() {
+        println("-=launching pc=-")
+        computer.getElectric()
+        computer.startFans()
+        computer.startBios()
+        computer.loadOs()
+    }
+}
+```
+
+#### Usage
+```Kotlin
+    val computer = ComputerFacade(computer = Computer())
+    computer.startPc()
+```
+
+[FlyWeight](/src/patterns/structural/FlyWeight.kt)
+--------
+#### Example
+```Kotlin
+abstract class Symbol(var char: Char? = null)
+
+class SymbolA(char: Char = 'A') : Symbol(char = char) {
+    init {
+        println("Symbol A created")
+    }
+}
+
+class SymbolB(char: Char = 'B') : Symbol(char = char) {
+    init {
+        println("Symbol B created")
+    }
+}
+
+class SymbolC(char: Char = 'C') : Symbol(char = char) {
+    init {
+        println("Symbol C created")
+    }
+}
+
+class SymbolD(char: Char = 'D') : Symbol(char = char) {
+    init {
+        println("Symbol D created")
+    }
+}
+
+
+class FlyWeightFactory {
+    private val symbols = mutableMapOf<Int, Symbol>()
+
+    fun getSymbol(index: Int): Symbol {
+        return symbols.getOrPut(index) {
+            when (index) {
+                0 -> SymbolA()
+                1 -> SymbolB()
+                2 -> SymbolC()
+                3 -> SymbolD()
+                else -> throw IllegalArgumentException("Unknown symbol: $index")
+            }
+        }
+    }
+}
+```
+
+#### Usage
+```Kotlin
+    val flyWeightFactory = FlyWeightFactory()
+
+    println("0 ==> ${flyWeightFactory.getSymbol(0).char}")
+    println("1 ==> ${flyWeightFactory.getSymbol(1).char}")
+    println("3 ==> ${flyWeightFactory.getSymbol(3).char}")
+    println("1 ==> ${flyWeightFactory.getSymbol(1).char}")
+    println("3 ==> ${flyWeightFactory.getSymbol(3).char}")
+    println("2 ==> ${flyWeightFactory.getSymbol(2).char}")
+```
+
+[Proxy](/src/patterns/structural/Proxy.kt)
+--------
+#### Example
+```Kotlin
+interface Service {
+    fun someOperation()
+}
+
+class RealService : Service {
+    init {
+        println("init RealService")
+    }
+
+    override fun someOperation() {
+        println("do some HARD work")
+    }
+}
+
+class ProxyService : Service {
+    init {
+        println("init ProxyService")
+    }
+
+    private val realService: Service? = null
+        get() = field ?: RealService()
+
+    override fun someOperation() {
+        realService?.someOperation()
+    }
+
+}
+```
+
+#### Usage
+```Kotlin
+    val proxy = ProxyService()
+    println("wait some time")
+    proxy.someOperation()
+```
