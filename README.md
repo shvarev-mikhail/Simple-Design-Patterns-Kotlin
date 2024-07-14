@@ -17,6 +17,17 @@ Updating in process
 	* [Facade](#facade)
   	* [FlyWeight](#flyweight)
 	* [Proxy](#proxy)
+ * Behavioral Patterns
+	* [Chain of Responsobility](#chain-of-responsobility)
+	* [Command](#command)
+	* [Interpreter](#interpreter)
+  	* [Mediator](#mediator)
+  	* [Memento](#memento)
+  	* [Observer](#observer)
+  	* [State](#state)
+  	* [Strategy](#strategy)
+  	* [Template Method](#template-method)
+  	* [Visitor](#visitor)
 
 
 [Abstract Factory](/src/patterns/generating/AbstractFactory.kt)
@@ -633,4 +644,526 @@ class ProxyService : Service {
     val proxy = ProxyService()
     println("wait some time")
     proxy.someOperation()
+```
+
+[Chain of responsobility](/src/patterns/behavioral/ChainOfResponsobility.kt)
+--------
+#### Example
+```Kotlin
+interface Handler {
+    fun showMessage()
+}
+
+abstract class AbstractHandler(open var message: String? = null) : Handler {
+    private var child: AbstractHandler? = null
+    override fun showMessage() {
+        if (message != null) {
+            println(message)
+        } else {
+            println("No message to show, go to next Item")
+            child?.showMessage()
+        }
+    }
+    fun addChild(child: AbstractHandler) {
+        this.child = child
+    }
+}
+
+class Button(override var message: String? = null) : AbstractHandler(message = message)
+class Dialog(override var message: String? = null) : AbstractHandler(message = message)
+```
+#### Usage
+```Kotlin
+    val dialog = Dialog("Dialog")
+    val buttonOk = Button("OK")
+    val buttonMiddle = Button()
+    val buttonCancel = Button("Cancel")
+
+    dialog.addChild(buttonOk)
+    buttonOk.addChild(buttonMiddle)
+    buttonMiddle.addChild(buttonCancel)
+
+    buttonMiddle.showMessage()
+```
+
+[Command](/src/patterns/behavioral/Command.kt)
+--------
+#### Example
+```Kotlin
+interface Command {
+    fun execute()
+}
+
+class CommandOpen(val file: String) : Command {
+    override fun execute() {
+        println("Open: $file")
+    }
+}
+
+class CommandSave(val file: String) : Command {
+    override fun execute() {
+        println("Save: $file")
+    }
+
+}
+
+
+fun executeCommand(command: Command) {
+    command.execute()
+}
+```
+#### Usage
+```Kotlin
+    val commandOpen = CommandOpen("diary.txt")
+    val commandSave = CommandSave("diary.txt")
+    val listOfCommand = listOf(commandOpen, commandSave)
+    listOfCommand.forEach {
+        executeCommand(it)
+        Thread.sleep(1000)
+    }
+```
+
+[Interpreter](/src/patterns/behavioral/Interpreter.kt)
+--------
+#### Example
+```Kotlin
+interface Expression {
+    fun interpret(): Int
+}
+
+class NumberExpression(private val number: Int) : Expression {
+    constructor(number: String) : this(number = number.toInt())
+
+    override fun interpret(): Int = number
+
+}
+
+class PlusExpression(private val left: Expression, private val right: Expression) : Expression {
+    override fun interpret(): Int = left.interpret() + right.interpret()
+}
+
+class MinusExpression(private val left: Expression, private val right: Expression) : Expression {
+    override fun interpret(): Int = left.interpret() - right.interpret()
+}
+
+fun getOperatorInstance(s: String?, left: Expression?, right: Expression?): Expression {
+    return when (s) {
+        "+" -> PlusExpression(left!!, right!!)
+        "-" -> MinusExpression(left!!, right!!)
+        else -> throw IllegalArgumentException("Unknown operator $s")
+    }
+}
+```
+#### Usage
+```Kotlin
+    val example = "2 + 3"
+    val exampleTransformed = example.split(" ")
+    val result = getOperatorInstance(
+        exampleTransformed[1],
+        NumberExpression(exampleTransformed[0]),
+        NumberExpression(exampleTransformed[2])
+    )
+    println("result: ${result.interpret()}")
+```
+[Iterator](/src/patterns/behavioral/Iterator.kt)
+--------
+#### Example
+```Kotlin
+interface IteratorItem<T> {
+    fun hasNext(): Boolean
+    fun next(): T
+}
+
+class IteratorImpl<T>(val list: List<T>) : IteratorItem<T> {
+    private var position = 0
+    override fun hasNext(): Boolean = position < list.size
+
+    override fun next(): T {
+        val result = list[position]
+        position++
+        return result
+    }
+}
+```
+#### Usage
+```Kotlin
+    val list = listOf("a", "b", "c")
+    val iterator = IteratorImpl<String>(list)
+    while (iterator.hasNext()) {
+        println(iterator.next())
+    }
+```
+
+[Mediator](/src/patterns/behavioral/Mediator.kt)
+--------
+#### Example
+```Kotlin
+enum class Event {
+    CLICK_BTN_OK,
+    CLICK_CHECKBOX
+}
+
+interface Mediator {
+    fun notify(component: Component, event: Event)
+}
+
+interface Component {
+    fun click()
+}
+
+class MediatorImpl : Mediator {
+    private var checkBoxState = false
+    override fun notify(component: Component, event: Event) {
+        when (event) {
+            Event.CLICK_BTN_OK -> {
+                if (checkBoxState) {
+                    println("ButtonOk clicked")
+                }else{
+                    println("ButtonOk disabled can not clicked")
+                }
+            }
+            Event.CLICK_CHECKBOX -> {
+                println("CheckBox clicked: state: $checkBoxState-> ${!checkBoxState}")
+                checkBoxState = !checkBoxState
+                println("ButtonOk enable: $checkBoxState")
+            }
+        }
+    }
+
+}
+
+class ButtonOk(val mediatorImpl: Mediator) : Component{
+    override fun click() {
+        mediatorImpl.notify(this, Event.CLICK_BTN_OK)
+    }
+
+}
+class CheckBox(val mediatorImpl: Mediator) : Component {
+    override fun click() {
+        mediatorImpl.notify(this, Event.CLICK_CHECKBOX)
+    }
+}
+```
+#### Usage
+```Kotlin
+    val mediator = MediatorImpl()
+    val checkbox = CheckBox(mediatorImpl = mediator)
+    val button = ButtonOk(mediatorImpl = mediator)
+    button.click()
+    checkbox.click()
+    button.click()
+```
+
+[Memento](/src/patterns/behavioral/Memento.kt)
+--------
+#### Example
+```Kotlin
+class MementoSpecial(
+    private val strength: Int,
+    private val perception: Int,
+    private val endurance: Int,
+    private val charisma: Int,
+    private val intelligence: Int,
+    private val agility: Int,
+    private val luck: Int
+) {
+    fun getStrength() = strength
+    fun getPerception() = perception
+    fun getEndurance() = endurance
+    fun getCharisma() = charisma
+    fun getIntelligence() = intelligence
+    fun getAgility() = agility
+    fun getLuck() = luck
+}
+
+class Person(
+    private var strength: Int,
+    private var perception: Int,
+    private var endurance: Int,
+    private var charisma: Int,
+    private var intelligence: Int,
+    private var agility: Int,
+    private var luck: Int
+) {
+    private fun canLevelUp(value: Int): Int {
+        if (value < 10) return value + 1
+        return value
+    }
+
+    fun levelUp() {
+        strength = canLevelUp(strength)
+        perception = canLevelUp(perception)
+        endurance = canLevelUp(endurance)
+        charisma = canLevelUp(charisma)
+        intelligence = canLevelUp(intelligence)
+        agility = canLevelUp(agility)
+        luck = canLevelUp(luck)
+    }
+
+    fun save(): MementoSpecial {
+        return MementoSpecial(
+            strength,
+            perception,
+            endurance,
+            charisma,
+            intelligence,
+            agility,
+            luck
+        )
+    }
+
+    fun restore(mementoSpecial: MementoSpecial) {
+        strength = mementoSpecial.getStrength()
+        perception = mementoSpecial.getPerception()
+        endurance = mementoSpecial.getEndurance()
+        charisma = mementoSpecial.getCharisma()
+        intelligence = mementoSpecial.getIntelligence()
+        agility = mementoSpecial.getAgility()
+        luck = mementoSpecial.getLuck()
+    }
+
+    override fun toString(): String = "strength=$strength, perception=$perception, endurance=$endurance, charisma=$charisma, intelligence=$intelligence, agility=$agility, luck=$luck"
+}
+```
+#### Usage
+```Kotlin
+    val stack = Stack<MementoSpecial>()
+    val person = Person(
+        strength = 5,
+        perception = 1,
+        endurance = 3,
+        intelligence = 5,
+        agility = 2,
+        charisma = 8,
+        luck = 2
+    )
+    person.levelUp()
+    stack.push(person.save())
+    person.levelUp()
+    person.levelUp()
+    println("current person level: $person")
+    person.restore(stack.pop())
+    println("restored person level: $person")
+```
+
+[Observer](/src/patterns/behavioral/Observer.kt)
+--------
+#### Example
+```Kotlin
+interface NewsObserver {
+    fun update(news: String)
+}
+
+interface NewsPublisher {
+    fun addObserver(observer: NewsObserver)
+    fun removeObserver(observer: NewsObserver)
+    fun notifyObservers()
+}
+
+class NewsPublisherImpl : NewsPublisher {
+    private var news = ""
+
+
+    fun publishNews(news: String) {
+        this.news = news
+        notifyObservers()
+    }
+    private val observers = mutableListOf<NewsObserver>()
+    override fun addObserver(observer: NewsObserver) {
+        observers.add(observer)
+    }
+
+    override fun removeObserver(observer: NewsObserver) {
+        observers.remove(observer)
+    }
+
+    override fun notifyObservers() {
+        observers.forEach { it.update(news = news) }
+    }
+}
+```
+#### Usage
+```Kotlin
+    val observable = NewsPublisherImpl()
+    observable.addObserver(object : NewsObserver {
+        override fun update(news: String) {
+            println("observer 1 - News: $news")
+        }
+    })
+    observable.addObserver(object : NewsObserver {
+        override fun update(news: String) {
+            println("observer 2 - News: $news")
+        }
+    })
+
+    observable.publishNews(news = "Hello News")
+    observable.publishNews(news = "Kotlin released")
+```
+
+[State](/src/patterns/behavioral/State.kt)
+--------
+#### Example
+```Kotlin
+interface State {
+    fun doAction()
+}
+
+class ConcreteState1 : State {
+    override fun doAction() {
+        println("do something in ConcreteState - 1")
+    }
+}
+
+class ConcreteState2 : State {
+    override fun doAction() {
+        println("do something in ConcreteState - 2")
+    }
+}
+
+class Context(private var state: State) {
+    fun doAction() {
+        state.doAction()
+    }
+
+    fun changeState(state: State) {
+        this.state = state
+    }
+}
+```
+#### Usage
+```Kotlin
+    val state1 = ConcreteState1()
+    val state2 = ConcreteState2()
+
+    val context = Context(state = state1)
+    context.doAction()
+    context.changeState(state2)
+    context.doAction()
+```
+
+[Strategy](/src/patterns/behavioral/Strategy.kt)
+--------
+#### Example
+```Kotlin
+interface Strategy {
+    fun execute(a: Int, b: Int): Int
+}
+
+class PlusStrategy : Strategy {
+    override fun execute(a: Int, b: Int): Int = a + b
+}
+
+class MinusStrategy : Strategy {
+    override fun execute(a: Int, b: Int): Int = a - b
+}
+
+class ContextStrategy(private var strategy: Strategy? = null) {
+    fun setStrategy(strategy: Strategy) {
+        this.strategy = strategy
+    }
+
+    fun execute(a: Int, b: Int): Int = strategy?.execute(a, b) ?: -1
+}
+```
+#### Usage
+```Kotlin
+    val value = "1 + 4".split(" ")
+    val ctx = ContextStrategy()
+    when (value[1]) {
+        "+" -> {
+            ctx.setStrategy(PlusStrategy())
+            println("= ${ctx.execute(value[0].toInt(), value[2].toInt())}")
+        }
+
+        "-" -> {
+            ctx.setStrategy(MinusStrategy())
+            println("= ${ctx.execute(value[0].toInt(), value[2].toInt())}")
+        }
+
+        else -> {
+            throw IllegalArgumentException("Unknown operation")
+        }
+    }
+```
+
+[Template Method](/src/patterns/behavioral/TemplateMethod.kt)
+--------
+#### Example
+```Kotlin
+abstract class TemplateMethod {
+
+    fun templateMethod() {
+        operation1()
+        operation2()
+        operation3()
+    }
+
+    abstract fun operation1()
+    abstract fun operation2()
+    abstract fun operation3()
+}
+
+class ConcreteTemplateMethod : TemplateMethod() {
+    override fun operation1() {
+        println("Operation 1 overridden in ConcreteTemplateMethod")
+    }
+
+    override fun operation2() {
+        println("Operation 2 overridden in ConcreteTemplateMethod")
+    }
+
+    override fun operation3() {
+        println("Operation 3 overridden in ConcreteTemplateMethod")
+    }
+}
+```
+#### Usage
+```Kotlin
+    val concreteClass = ConcreteTemplateMethod()
+    concreteClass.templateMethod()
+```
+
+[Visitor](/src/patterns/behavioral/Visitor.kt)
+--------
+#### Example
+```Kotlin
+interface Gun{
+    fun accept(visitor: Visitor)
+}
+interface Visitor {
+    fun visitGaussGun(element: Gun)
+    fun visitPistolGun(element: Gun)
+}
+
+class SoundsGunVisitor: Visitor {
+    override fun visitGaussGun(element: Gun) {
+        println("Bzzz")
+    }
+
+    override fun visitPistolGun(element: Gun) {
+        println("Peo")
+    }
+}
+
+class GaussGun : Gun {
+    override fun accept(visitor: Visitor) {
+        visitor.visitGaussGun(this)
+    }
+}
+class PistolGun : Gun {
+    override fun accept(visitor: Visitor) {
+        visitor.visitPistolGun(this)
+    }
+}
+```
+#### Usage
+```Kotlin
+    val gaussianGun = GaussGun()
+    val pistolGun = PistolGun()
+
+    val visitor = SoundsGunVisitor()
+    println("Gauss gun sound:")
+    gaussianGun.accept(visitor)
+    println("Pistol gun sound:")
+    pistolGun.accept(visitor)
 ```
