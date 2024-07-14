@@ -1,5 +1,3 @@
-Updating in process
-
 # Simple Design Patterns
 
  * Creating Patterns
